@@ -1,0 +1,11 @@
+---
+# List of user to create keys for
+ssh_users: []
+
+# Basepath to store keys in
+ssh_keys_base_path: ''
+
+# Optional additional settings
+ssh_type: rsa
+ssh_size: 4096
+ssh_mode: '0600'
