@@ -2,7 +2,7 @@
 - name: Create ssh-keys directories and ensure file mode
   ansible.builtin.file:
       path:
-          "{{ ssh_keys_base_path }}/{{ user.value.company | default('') }}/ {{
+          "{{ ssh_keys_base_path }}/{{ user.value.company | default('') }}/{{
           user.value.username }}/"
       state: directory
       recurse: true
@@ -15,7 +15,7 @@
 - name: Generate ssh-key pair
   community.crypto.openssh_keypair:
       path:
-          "{{ ssh_keys_base_path }}/{{ user.value.company | default('') }}/ {{
+          "{{ ssh_keys_base_path }}/{{ user.value.company | default('') }}/{{
           user.value.username }}/id_rsa"
       comment: '{{ user.value.username }}'
       force: false
