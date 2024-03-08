@@ -1,28 +1,22 @@
 ---
 - name: Create ssh-keys directories and ensure file mode
   ansible.builtin.file:
-      path:
-          "{{ ssh_keys_base_path }}/{{ user.value.company | default('') }}/{{
-          user.value.username }}/"
-      state: directory
-      recurse: true
-      mode: u=rwX,g=X,o=X # we have to set the whole directory to rwX since git will set it to RW-R-R
-  loop: '{{ ssh_users | dict2items }}'
+    path: "{{ ssh_keys_base_path }}/{{ user.ssh_key_path }}/"
+    state: directory
+    recurse: true
+    mode: u=rwX,g=X,o=X # we have to set the whole directory to rwX since git will set it to RW-R-R
+  loop: "{{ ssh_users }}"
   loop_control:
-      loop_var: user
-  when: user.value.ssh_key is defined and user.value.ssh_key | bool
+    loop_var: user
 
 - name: Generate ssh-key pair
   community.crypto.openssh_keypair:
-      path:
-          "{{ ssh_keys_base_path }}/{{ user.value.company | default('') }}/{{
-          user.value.username }}/id_rsa"
-      comment: '{{ user.value.username }}'
-      force: false
-      type: '{{ ssh_type }}'
-      size: '{{ ssh_size }}'
-      mode: '{{ ssh_mode }}'
-  loop: '{{ ssh_users | dict2items }}'
+    path: "{{ ssh_keys_base_path }}/{{ user.ssh_key_path }}/id_rsa"
+    comment: "{{ user.username }}"
+    force: false
+    type: "{{ ssh_type }}"
+    size: "{{ ssh_size }}"
+    mode: "{{ ssh_mode }}"
+  loop: "{{ ssh_users }}"
   loop_control:
-      loop_var: user
-  when: user.value.ssh_key is defined and user.value.ssh_key | bool
+    loop_var: user
