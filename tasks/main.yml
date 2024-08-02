@@ -9,8 +9,6 @@
   register: file_check
 
 - name: Create ssh-keys directories and ensure file mode
-  async: 3600
-  poll: 0
   ansible.builtin.file:
     path: '{{ ssh_keys_base_path }}/{{ result.user.ssh_key_path }}/'
     state: directory
@@ -37,3 +35,22 @@
     loop_var: result
     label: '{{ result.user.ssh_key_path }}/id_{{ ssh_type }}'
   when: not result.stat.exists
+  register: key_gen_tasks
+  ignore_errors: true
+
+- name: Wait for SSH key pairs to be generated
+  async_status:
+    jid: '{{ item.ansible_job_id }}'
+  register: key_gen_results
+  until: key_gen_results.finished
+  retries: 30
+  delay: 2
+  loop: '{{ key_gen_tasks.results }}'
+  loop_control:
+    label:
+      '{{ item.result.user.ssh_key_path | default("user") + ": " +
+      item.ansible_job_id | default(item.result.stat.path) | default(item) }}'
+  when:
+    key_gen_tasks is defined and key_gen_tasks.results is defined and
+    item.ansible_job_id is defined
+  ignore_errors: true
