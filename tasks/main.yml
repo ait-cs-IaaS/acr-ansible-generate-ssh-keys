@@ -1,31 +1,39 @@
 ---
 - name: Check for already existing private keys
   ansible.builtin.stat:
-    path: "{{ ssh_keys_base_path }}/{{ user.ssh_key_path }}/id_rsa"
-  loop: "{{ ssh_users }}"
+    path: '{{ ssh_keys_base_path }}/{{ user.ssh_key_path }}/id_{{ ssh_type }}'
+  loop: '{{ ssh_users }}'
   loop_control:
     loop_var: user
+    label: '{{ user.ssh_key_path }}'
   register: file_check
 
 - name: Create ssh-keys directories and ensure file mode
+  async: 3600
+  poll: 0
   ansible.builtin.file:
-    path: "{{ ssh_keys_base_path }}/{{ result.user.ssh_key_path }}/"
+    path: '{{ ssh_keys_base_path }}/{{ result.user.ssh_key_path }}/'
     state: directory
     recurse: true
     mode: u=rwX,g=X,o=X # we have to set the whole directory to rwX since git will set it to RW-R-R
-  loop: "{{ file_check.results | default([]) }}"
+  loop: '{{ file_check.results | default([]) }}'
   loop_control:
     loop_var: result
+    label: '{{ result.user.ssh_key_path }}'
   when: not result.stat.exists
 
 - name: Generate ssh-key pair
+  async: 3600
+  poll: 0
   community.crypto.openssh_keypair:
-    path: "{{ ssh_keys_base_path }}/{{ result.user.ssh_key_path }}/id_rsa"
-    comment: "{{ result.user.username }}"
-    type: "{{ ssh_type }}"
-    size: "{{ ssh_size }}"
-    mode: "{{ ssh_mode }}"
-  loop: "{{ file_check.results | default([]) }}"
+    path:
+      '{{ ssh_keys_base_path }}/{{ result.user.ssh_key_path }}/id_{{ ssh_type }}'
+    comment: '{{ result.user.username }}'
+    type: '{{ ssh_type }}'
+    size: '{{ ssh_size }}'
+    mode: '{{ ssh_mode }}'
+  loop: '{{ file_check.results | default([]) }}'
   loop_control:
     loop_var: result
+    label: '{{ result.user.ssh_key_path }}/id_{{ ssh_type }}'
   when: not result.stat.exists
